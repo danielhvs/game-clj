@@ -1,17 +1,121 @@
 (ns game-clj.core
   (:require [play-clj.core :refer :all]
-            [play-clj.ui :refer :all]))
+            [play-clj.ui :refer :all]
+            [play-clj.g2d :refer :all]
+            [play-clj.g2d-physics :refer :all]))
+
+(def ^:const pixels-per-tile 32)
+
+(defn create-ball-body!
+  [screen radius]
+  (let [body (add-body! screen (body-def :dynamic))]
+    (->> (circle-shape :set-radius radius)
+         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+         (body! body :create-fixture))
+    body))
+
+(defn create-rect-body!
+  [screen width height]
+  (let [body (add-body! screen (body-def :static))]
+    (->> [0 0
+          0 height
+          width height
+          width 0
+          0 0]
+         float-array
+         (chain-shape :create-chain)
+         (fixture-def :density 1 :shape)
+         (body! body :create-fixture))
+    body))
+
+(defn create-ball-entity!
+  [screen]
+  (let [radius (/ 32 pixels-per-tile 2)
+        ball (shape :line
+                    :set-color (color :teal)
+                    :circle 0 0 radius 20)]
+    (assoc ball :body (create-ball-body! screen radius))))
+
+(defn create-rect-entity!
+  [screen block width height]
+  (assoc block
+         :body (create-rect-body! screen width height)
+         :width width :height height))
+
+(defn move-paddle!
+  [entities]
+  (when-let [entity (some #(if (:paddle? %) %) entities)]
+    (body-x! entity (- (/ (game :x) pixels-per-tile)
+                       (/ (:width entity) 2)))))
 
 (defscreen main-screen
   :on-show
   (fn [screen entities]
-    (update! screen :renderer (stage))
-    (label "Hello world!" (color :white)))
-  
+    (let [screen (update! screen
+                          :camera (orthographic)
+                          :renderer (stage)
+                          :world (box-2d 0 0))
+          game-w (/ (game :width) pixels-per-tile)
+          game-h (/ (game :height) pixels-per-tile)
+          floor-h (/ 1 pixels-per-tile)
+          block-w (/ 100 pixels-per-tile)
+          block-h (/ 30 pixels-per-tile)
+          block (shape :line
+                       :set-color (color :green)
+                       :rect 0 0 block-w block-h)
+          block-cols (int (/ game-w block-w))
+          block-rows (int (/ game-h 2 block-h))
+          ball (doto (create-ball-entity! screen)
+                 (body-position! (/ 100 pixels-per-tile)
+                                 (/ 100 pixels-per-tile)
+                                 0)
+                 (body! :set-linear-velocity 10 10))
+          paddle (doto (create-rect-entity! screen block block-w block-h)
+                   (body-position! 0 0 0))
+          wall (doto {:body (create-rect-body! screen game-w game-h)}
+                 (body-position! 0 0 0))
+          floor (doto {:body (create-rect-body! screen game-w floor-h)}
+                  (body-position! 0 0 0))]
+      ; set the screen width in tiles
+      (width! screen game-w)
+      ; return the entities
+      [(assoc ball :ball? true)
+       (assoc paddle :paddle? true)
+       (assoc wall :wall? true)
+       (assoc floor :floor? true)
+       (for [col (range block-cols)
+             row (range block-rows)
+             :let [x (* col block-w)
+                   y (+ (* row block-h) (- game-h (* block-h block-rows)))]]
+         (assoc (doto (create-rect-entity! screen block block-w block-h)
+                  (body-position! x y 0))
+                :block? true))]))
+
   :on-render
   (fn [screen entities]
     (clear!)
-    (render! screen entities)))
+    (->> entities
+         (step! screen)
+         (render! screen)))
+
+  :on-mouse-moved
+  (fn [screen entities]
+    (move-paddle! entities)
+    nil)
+
+  :on-touch-dragged
+  (fn [screen entities]
+    (move-paddle! entities)
+    nil)
+
+  :on-begin-contact
+  (fn [screen entities]
+    (when-let [entity (first-entity screen entities)]
+      (cond
+        (:floor? entity)
+        entities
+        (:block? entity)
+        (remove #(= entity %) entities)))))
 
 (defgame game-clj-game
   :on-create
