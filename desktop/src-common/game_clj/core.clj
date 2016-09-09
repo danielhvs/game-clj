@@ -48,6 +48,10 @@
     (body-x! entity (- (/ (game :x) pixels-per-tile)
                        (/ (:width entity) 2)))))
 
+(defn move  [entities]
+  (when-let [entity (some #(if (:paddle? %) %) entities)]
+    (body-x! entity 0)))
+
 (defscreen main-screen
   :on-show
   (fn [screen entities]
@@ -107,6 +111,10 @@
   (fn [screen entities]
     (move-paddle! entities)
     nil)
+
+  :on-key-down
+  (fn [screen entities]
+    (move entities))
 
   :on-begin-contact
   (fn [screen entities]
