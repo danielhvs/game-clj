@@ -46,7 +46,7 @@
 
 (defn move [entities x y]
   (when-let [entity (some #(if (:paddle? %) %) entities)]
-    (body! entity :apply-force-to-center (vector-2 x y) true)))
+    (body! entity :set-linear-velocity x y)))
 
 (defscreen main-screen
   :on-show
@@ -69,7 +69,7 @@
                  (body-position! (/ 100 pixels-per-tile)
                                  (/ 100 pixels-per-tile)
                                  0)
-                 (body! :set-linear-velocity 10 10))
+                 (body! :set-linear-velocity 0 0))
           paddle (doto (create-rect-entity! screen block block-w block-h)
                    (body-position! 0 0 0))
           wall (doto {:body (create-rect-body! screen game-w game-h)}
@@ -100,17 +100,16 @@
 
   :on-key-down
   (fn [screen entities]
-    (let [x 25 y 15]
+    (let [x (cond (key-pressed? :a) -10 (key-pressed? :d) 10 :else 0)
+          y (cond (key-pressed? :s) -10 (key-pressed? :w) 10 :else 0)]
     (move entities x y)))
 
   :on-begin-contact
   (fn [screen entities]
     (when-let [entity (first-entity screen entities)]
       (cond
-        (:floor? entity)
-        entities
-        (:block? entity)
-        (remove #(= entity %) entities)))))
+        (:floor? entity) entities
+        (:block? entity) (remove #(= entity %) entities)))))
 
 (defgame game-clj-game
   :on-create
