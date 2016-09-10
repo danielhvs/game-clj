@@ -2,7 +2,9 @@
   (:require [play-clj.core :refer :all]
             [play-clj.ui :refer :all]
             [play-clj.g2d :refer :all]
-            [play-clj.g2d-physics :refer :all]))
+            [play-clj.g2d-physics :refer :all]
+            [play-clj.math :refer :all]))
+
 
 (def ^:const pixels-per-tile 32)
 
@@ -32,7 +34,7 @@
   [screen]
   (let [radius (/ 32 pixels-per-tile 2)
         ball (shape :line
-                    :set-color (color :teal)
+                    :set-color (color :blue)
                     :circle 0 0 radius 20)]
     (assoc ball :body (create-ball-body! screen radius))))
 
@@ -42,15 +44,9 @@
          :body (create-rect-body! screen width height)
          :width width :height height))
 
-(defn move-paddle!
-  [entities]
+(defn move [entities x y]
   (when-let [entity (some #(if (:paddle? %) %) entities)]
-    (body-x! entity (- (/ (game :x) pixels-per-tile)
-                       (/ (:width entity) 2)))))
-
-(defn move  [entities]
-  (when-let [entity (some #(if (:paddle? %) %) entities)]
-    (body-x! entity 0)))
+    (body! entity :apply-force-to-center (vector-2 x y) true)))
 
 (defscreen main-screen
   :on-show
@@ -83,8 +79,8 @@
       ; set the screen width in tiles
       (width! screen game-w)
       ; return the entities
-      [(assoc ball :ball? true)
-       (assoc paddle :paddle? true)
+      [(assoc ball :ball? true :paddle? true)
+       (assoc paddle :paddle? false)
        (assoc wall :wall? true)
        (assoc floor :floor? true)
        (for [col (range block-cols)
@@ -102,19 +98,10 @@
          (step! screen)
          (render! screen)))
 
-  :on-mouse-moved
-  (fn [screen entities]
-    (move-paddle! entities)
-    nil)
-
-  :on-touch-dragged
-  (fn [screen entities]
-    (move-paddle! entities)
-    nil)
-
   :on-key-down
   (fn [screen entities]
-    (move entities))
+    (let [x 25 y 15]
+    (move entities x y)))
 
   :on-begin-contact
   (fn [screen entities]
