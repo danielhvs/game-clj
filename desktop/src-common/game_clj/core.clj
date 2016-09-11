@@ -64,6 +64,16 @@
   (when-let [entity (some #(if (:paddle? %) %) entities)]
     (body! entity :set-linear-velocity x y)))
 
+
+(defn follow-head [entities]
+  (when-let [part (some #(if (:part? %) %) entities)]
+    (when-let [head (some #(if (:paddle? %) %) entities)]
+      (body! part :set-transform (- (x (body! head :get-position)) 1) (- (y (body! head :get-position)) 1) 0))))
+
+(defn update-screen!
+  [screen entities]
+  (follow-head entities))
+
 (defscreen main-screen
   :on-show
   (fn [screen entities]
@@ -100,8 +110,8 @@
       ; set the screen width in tiles
       (width! screen game-w)
       ; return the entities
-      [(assoc ball :ball? true :paddle? true)
-       part
+      [(assoc ball :ball? true :paddle? true :parts part)
+       (assoc part :part? true)
        (assoc wall :wall? true)
        (assoc floor :floor? true)
        (for [col (range block-cols)
@@ -117,7 +127,9 @@
     (clear!)
     (->> entities
          (step! screen)
-         (render! screen)))
+         (render! screen)
+         (update-screen! screen)
+         ))
 
   :on-key-down
   (fn [screen entities]
