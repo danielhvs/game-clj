@@ -8,6 +8,14 @@
 
 (def ^:const pixels-per-tile 32)
 
+(defn create-part-body!
+  [screen radius]
+  (let [body (add-body! screen (body-def :static))]
+    (->> (circle-shape :set-radius radius)
+         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+         (body! body :create-fixture))
+    body))
+
 (defn create-ball-body!
   [screen radius]
   (let [body (add-body! screen (body-def :dynamic))]
@@ -30,10 +38,18 @@
          (body! body :create-fixture))
     body))
 
+(defn create-part-entity!
+  [screen]
+  (let [radius (/ 32 pixels-per-tile 2)
+        part (shape :line
+                    :set-color (color :blue)
+                    :circle 0 0 radius 20)]
+    (assoc part :body (create-part-body! screen radius))))
+
 (defn create-ball-entity!
   [screen]
   (let [radius (/ 32 pixels-per-tile 2)
-        ball (shape :line
+        ball (shape :filled
                     :set-color (color :blue)
                     :circle 0 0 radius 20)]
     (assoc ball :body (create-ball-body! screen radius))))
@@ -65,6 +81,11 @@
                        :rect 0 0 block-w block-h)
           block-cols (int (/ game-w block-w))
           block-rows (int (/ game-h 2 block-h))
+          part (doto (create-part-entity! screen)
+                 (body-position! (/ 100 pixels-per-tile)
+                                 (/ 100 pixels-per-tile)
+                                 0)
+                 (body! :set-linear-velocity 0 0))
           ball (doto (create-ball-entity! screen)
                  (body-position! (/ 100 pixels-per-tile)
                                  (/ 100 pixels-per-tile)
@@ -80,7 +101,7 @@
       (width! screen game-w)
       ; return the entities
       [(assoc ball :ball? true :paddle? true)
-       (assoc paddle :paddle? false)
+       part
        (assoc wall :wall? true)
        (assoc floor :floor? true)
        (for [col (range block-cols)
@@ -111,7 +132,28 @@
         (:floor? entity) entities
         (:block? entity) (remove #(= entity %) entities)))))
 
+(defscreen text-screen
+  :on-show
+  (fn [screen entities]
+    (update! screen :camera (orthographic) :renderer (stage))
+    (assoc (label "0" (color :blue))
+           :id :fps
+           :x 5))
+  
+  :on-render
+  (fn [screen entities]
+    (->> (for [entity entities]
+           (case (:id entity)
+             :fps (doto entity (label! :set-text (str (game :fps))))
+             entity))
+         (render! screen)))
+  
+  :on-resize
+  (fn [screen entities]
+    (height! screen 300)))
+
 (defgame game-clj-game
   :on-create
   (fn [this]
-    (set-screen! this main-screen)))
+    (set-screen! this main-screen text-screen)))
+
