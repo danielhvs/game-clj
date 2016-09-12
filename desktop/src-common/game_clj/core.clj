@@ -3,10 +3,16 @@
             [play-clj.ui :refer :all]
             [play-clj.g2d :refer :all]
             [play-clj.g2d-physics :refer :all]
-            [play-clj.math :refer :all]))
-
+            [play-clj.math :refer :all])
+  (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 (def ^:const pixels-per-tile 32)
+
+;; https://www.bountysource.com/teams/play-clj/issues
+(defn collision-group [group]
+  (let [collision-filter (new com.badlogic.gdx.physics.box2d.Filter)]
+    (set! (.groupIndex collision-filter) (short group))
+    collision-filter))
 
 (defn create-part-body!
   [screen radius]
@@ -68,7 +74,8 @@
 (defn follow-head [entities]
   (when-let [part (some #(if (:part? %) %) entities)]
     (when-let [head (some #(if (:paddle? %) %) entities)]
-      (body! part :set-transform (- (x (body! head :get-position)) 1) (- (y (body! head :get-position)) 1) 0))))
+      (let [position (body! head :get-position) ]
+        (body-position! part (- (x position) 0.3) (- (y position) 0.3) 0)))))
 
 (defn update-screen!
   [screen entities]
@@ -151,7 +158,7 @@
     (assoc (label "0" (color :blue))
            :id :fps
            :x 5))
-  
+
   :on-render
   (fn [screen entities]
     (->> (for [entity entities]
@@ -159,7 +166,7 @@
              :fps (doto entity (label! :set-text (str (game :fps))))
              entity))
          (render! screen)))
-  
+
   :on-resize
   (fn [screen entities]
     (height! screen 300)))
@@ -169,3 +176,4 @@
   (fn [this]
     (set-screen! this main-screen text-screen)))
 
+;; (-> main-screen :entities deref)
