@@ -177,3 +177,25 @@
 
 ;; (-> main-screen :entities deref)
 ;; (.groupIndex (.getFilterData (first (.getFixtureList (:body (first (filter :ball? @(-> main-screen :entities))))))))
+
+(defn construir-2 [primeiro segundo]
+  (list primeiro (list (last primeiro) (first segundo)) segundo))
+
+(defn construir [lista]
+  (when-let [primeiro (first lista)]
+    (when-let [segundo (first (rest lista))]
+      (list
+        (construir-2 primeiro segundo)
+        (construir (rest lista))
+            ))))
+
+(def lista (partition 2 [1 2 3 4 5 6 7 8]))
+(def not-nil? (complement nil?))
+(filter #(not-nil? %) (flatten (construir lista)))
+lista
+(first lista)
+(rest lista)
+(first (rest lista))
+(construir lista)
+(construir-2 (list 1 2) (list 3 4))
+
