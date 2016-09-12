@@ -72,7 +72,7 @@
 
 (defn follow-head [entities]
   (when-let [part (some #(if (:part? %) %) entities)]
-    (when-let [head (some #(if (:paddle? %) %) entities)]
+    (when-let [head (some #(if (:ball? %) %) entities)]
       (let [position (vector-2! (body! part :get-position) :lerp (body! head :get-position) 0.25) ]
         (body-position! part (x position) (y position) 0)))))
 
@@ -97,18 +97,11 @@
                        :rect 0 0 block-w block-h)
           block-cols (int (/ game-w block-w))
           block-rows (int (/ game-h 2 block-h))
-          part (doto (create-part-entity! screen)
-                 (body-position! (/ 100 pixels-per-tile)
-                                 (/ 100 pixels-per-tile)
-                                 0)
-                 (body! :set-linear-velocity 0 0))
           ball (doto (create-ball-entity! screen)
                  (body-position! (/ 100 pixels-per-tile)
                                  (/ 100 pixels-per-tile)
                                  0)
                  (body! :set-linear-velocity 0 0))
-          paddle (doto (create-rect-entity! screen block block-w block-h)
-                   (body-position! 0 0 0))
           wall (doto {:body (create-rect-body! screen game-w game-h)}
                  (body-position! 0 0 0))
           floor (doto {:body (create-rect-body! screen game-w floor-h)}
@@ -116,10 +109,17 @@
       ; set the screen width in tiles
       (width! screen game-w)
       ; return the entities
-      [(assoc ball :ball? true :paddle? true :parts part)
-       (assoc part :part? true)
+      [(assoc ball :ball? true)
        (assoc wall :wall? true)
        (assoc floor :floor? true)
+       (for [col (range block-cols)
+             row (range block-rows)
+             :let [x (* col block-w)
+                   y (+ (* row block-h) (- game-h (* block-h block-rows)))]]
+         (assoc (doto  (create-part-entity! screen)
+                       (body-position! x y 0)
+                       (body! :set-linear-velocity 0 0))
+                :part? true))
        (for [col (range block-cols)
              row (range block-rows)
              :let [x (* col block-w)
