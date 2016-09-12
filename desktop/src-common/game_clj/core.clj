@@ -8,31 +8,25 @@
 
 (def ^:const pixels-per-tile 32)
 
-;; https://www.bountysource.com/teams/play-clj/issues
-;; unused
-(defn collision-group [group]
-  (let [collision-filter (new com.badlogic.gdx.physics.box2d.Filter)]
-    (set! (.groupIndex collision-filter) (short group))
-    collision-filter))
-
 (defn create-part-body!
   [screen radius]
   (let [body (add-body! screen (body-def :static))]
-    (do (->> (circle-shape :set-radius radius)
-             (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-             (body! body :create-fixture))
-        (let [fixture (first (body! body :get-fixture-list))]
-        (set! (.groupIndex (.getFilterData fixture)) 1)
-    body))))
+    (let [part-fixture-def
+          (->> (circle-shape :set-radius radius)
+               (fixture-def :density 1 :friction 0 :restitution 1 :shape))]
+      (do
+        (set! (.groupIndex (.filter part-fixture-def)) (short -1))
+        (body! body :create-fixture part-fixture-def))
+      body)))
 
 (defn create-ball-body!
   [screen radius]
   (let [body (add-body! screen (body-def :dynamic))]
-    (do (->> (circle-shape :set-radius radius)
-             (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-             (body! body :create-fixture))
-        (let [fixture (first (body! body :get-fixture-list))]
-        (set! (.groupIndex (.getFilterData fixture)) 1))
+    (let [ball-fixture-def
+          (->> (circle-shape :set-radius radius)
+               (fixture-def :density 1 :friction 0 :restitution 1 :shape))]
+      (do (set! (.groupIndex (.filter ball-fixture-def)) (short -1))
+          (body! body :create-fixture ball-fixture-def))
     body)))
 
 (defn create-rect-body!
@@ -153,8 +147,6 @@
   (fn [screen entities]
     (when-let [entity (first-entity screen entities)]
       (cond
-        (:ball? entity) (println "ball")
-        (:part? entity) (println "part")
         (:floor? entity) entities
         (:block? entity) (remove #(= entity %) entities)))))
 
@@ -184,3 +176,4 @@
     (set-screen! this main-screen text-screen)))
 
 ;; (-> main-screen :entities deref)
+;; (.groupIndex (.getFilterData (first (.getFixtureList (:body (first (filter :ball? @(-> main-screen :entities))))))))
