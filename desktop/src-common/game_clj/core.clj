@@ -9,6 +9,7 @@
 (def ^:const pixels-per-tile 32)
 
 ;; https://www.bountysource.com/teams/play-clj/issues
+;; unused
 (defn collision-group [group]
   (let [collision-filter (new com.badlogic.gdx.physics.box2d.Filter)]
     (set! (.groupIndex collision-filter) (short group))
@@ -17,18 +18,22 @@
 (defn create-part-body!
   [screen radius]
   (let [body (add-body! screen (body-def :static))]
-    (->> (circle-shape :set-radius radius)
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-         (body! body :create-fixture))
-    body))
+    (do (->> (circle-shape :set-radius radius)
+             (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+             (body! body :create-fixture))
+        (let [fixture (first (body! body :get-fixture-list))]
+        (set! (.groupIndex (.getFilterData fixture)) 1)
+    body))))
 
 (defn create-ball-body!
   [screen radius]
   (let [body (add-body! screen (body-def :dynamic))]
-    (->> (circle-shape :set-radius radius)
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-         (body! body :create-fixture))
-    body))
+    (do (->> (circle-shape :set-radius radius)
+             (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+             (body! body :create-fixture))
+        (let [fixture (first (body! body :get-fixture-list))]
+        (set! (.groupIndex (.getFilterData fixture)) 1))
+    body)))
 
 (defn create-rect-body!
   [screen width height]
@@ -148,6 +153,8 @@
   (fn [screen entities]
     (when-let [entity (first-entity screen entities)]
       (cond
+        (:ball? entity) (println "ball")
+        (:part? entity) (println "part")
         (:floor? entity) entities
         (:block? entity) (remove #(= entity %) entities)))))
 
