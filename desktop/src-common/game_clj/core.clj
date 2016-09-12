@@ -7,6 +7,21 @@
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 (def ^:const pixels-per-tile 32)
+(def not-nil? (complement nil?))
+
+(defn construir-2 [primeiro segundo]
+  (list primeiro (list (last primeiro) (first segundo)) segundo))
+
+(defn construir [lista]
+  (when-let [primeiro (first lista)]
+    (when-let [segundo (first (rest lista))]
+      (list
+        (construir-2 primeiro segundo)
+        (construir (rest lista))
+            ))))
+
+;; (filter #(not-nil? %) (flatten (construir lista)))
+
 
 (defn create-part-body!
   [screen radius]
@@ -73,8 +88,12 @@
 (defn follow-head [entities]
   (when-let [part (some #(if (:part? %) %) entities)]
     (when-let [head (some #(if (:ball? %) %) entities)]
-      (let [position (vector-2! (body! part :get-position) :lerp (body! head :get-position) 0.25) ]
-        (body-position! part (x position) (y position) 0)))))
+;;       FIXME: return pairs for interpolation...
+      (let [parts (filter #(not-nil? %) (flatten (construir (list head part))))]
+        (let [position (vector-2! (body! part :get-position) :lerp (body! head :get-position) 0.25) ]
+          (do
+;;               (println parts)
+              (body-position! part (x position) (y position) 0)))))))
 
 (defn update-screen!
   [screen entities]
@@ -177,25 +196,4 @@
 
 ;; (-> main-screen :entities deref)
 ;; (.groupIndex (.getFilterData (first (.getFixtureList (:body (first (filter :ball? @(-> main-screen :entities))))))))
-
-(defn construir-2 [primeiro segundo]
-  (list primeiro (list (last primeiro) (first segundo)) segundo))
-
-(defn construir [lista]
-  (when-let [primeiro (first lista)]
-    (when-let [segundo (first (rest lista))]
-      (list
-        (construir-2 primeiro segundo)
-        (construir (rest lista))
-            ))))
-
-(def lista (partition 2 [1 2 3 4 5 6 7 8]))
-(def not-nil? (complement nil?))
-(filter #(not-nil? %) (flatten (construir lista)))
-lista
-(first lista)
-(rest lista)
-(first (rest lista))
-(construir lista)
-(construir-2 (list 1 2) (list 3 4))
 
