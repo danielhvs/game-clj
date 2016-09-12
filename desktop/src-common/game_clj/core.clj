@@ -73,8 +73,8 @@
 (defn follow-head [entities]
   (when-let [part (some #(if (:part? %) %) entities)]
     (when-let [head (some #(if (:paddle? %) %) entities)]
-      (let [position (body! head :get-position) ]
-        (body-position! part (- (x position) 0.3) (- (y position) 0.3) 0)))))
+      (let [position (vector-2! (body! part :get-position) :lerp (body! head :get-position) 0.25) ]
+        (body-position! part (x position) (y position) 0)))))
 
 (defn update-screen!
   [screen entities]
