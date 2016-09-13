@@ -7,21 +7,6 @@
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 (def ^:const pixels-per-tile 32)
-(def not-nil? (complement nil?))
-
-(defn construir-2 [primeiro segundo]
-  (list primeiro (list (last primeiro) (first segundo)) segundo))
-
-(defn construir [lista]
-  (when-let [primeiro (first lista)]
-    (when-let [segundo (first (rest lista))]
-      (list
-        (construir-2 primeiro segundo)
-        (construir (rest lista))
-            ))))
-
-;; (filter #(not-nil? %) (flatten (construir lista)))
-
 
 (defn create-part-body!
   [screen radius]
@@ -81,19 +66,21 @@
          :width width :height height))
 
 (defn move [entities x y]
-  (when-let [entity (some #(if (:paddle? %) %) entities)]
+  (when-let [entity (some #(if (:ball? %) %) entities)]
     (body! entity :set-linear-velocity x y)))
 
 
+(defn interpolate-snake [part1 part2]
+  (let [position (vector-2! (body! part2 :get-position) :lerp (body! part1 :get-position) 0.25) ]
+        (body-position! part2 (x position) (y position) 0))
+  part2)
+
+
 (defn follow-head [entities]
-  (when-let [part (some #(if (:part? %) %) entities)]
+  (when-let [parts (filter #(if (:part? %) %) entities)]
     (when-let [head (some #(if (:ball? %) %) entities)]
-;;       FIXME: return pairs for interpolation...
-      (let [parts (filter #(not-nil? %) (flatten (construir (list head part))))]
-        (let [position (vector-2! (body! part :get-position) :lerp (body! head :get-position) 0.25) ]
-          (do
-;;               (println parts)
-              (body-position! part (x position) (y position) 0)))))))
+      (reduce interpolate-snake head parts)))
+  entities)
 
 (defn update-screen!
   [screen entities]
