@@ -71,7 +71,7 @@
 
 
 (defn interpolate-snake [part1 part2]
-  (let [position (vector-2! (body! part2 :get-position) :lerp (body! part1 :get-position) 0.25) ]
+  (let [position (vector-2! (body! part2 :get-position) :lerp (body! part1 :get-position) 0.5) ]
         (body-position! part2 (x position) (y position) 0))
   part2)
 
@@ -99,7 +99,7 @@
           block-w (/ 100 pixels-per-tile)
           block-h (/ 30 pixels-per-tile)
           block (shape :line
-                       :set-color (color :green)
+                       :set-color (color :yellow)
                        :rect 0 0 block-w block-h)
           block-cols (int (/ game-w block-w))
           block-rows (int (/ game-h 2 block-h))
@@ -145,8 +145,8 @@
 
   :on-key-down
   (fn [screen entities]
-    (let [x (cond (key-pressed? :a) -10 (key-pressed? :d) 10 :else 0)
-          y (cond (key-pressed? :s) -10 (key-pressed? :w) 10 :else 0)]
+    (let [x (cond (key-pressed? :a) -20 (key-pressed? :d) 20 :else 0)
+          y (cond (key-pressed? :s) -20 (key-pressed? :w) 20 :else 0)]
     (move entities x y)))
 
   :on-begin-contact
@@ -160,7 +160,7 @@
   :on-show
   (fn [screen entities]
     (update! screen :camera (orthographic) :renderer (stage))
-    (assoc (label "0" (color :blue))
+    (assoc (label "0" (color :white))
            :id :fps
            :x 5))
 
