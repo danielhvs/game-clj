@@ -27,7 +27,7 @@
                (fixture-def :density 1 :friction 0 :restitution 1 :shape))]
       (do (set! (.groupIndex (.filter ball-fixture-def)) (short -1))
           (body! body :create-fixture ball-fixture-def))
-    body)))
+     body)))
 
 (defn create-rect-body!
   [screen width height]
@@ -71,8 +71,8 @@
 
 
 (defn interpolate-snake [part1 part2]
-  (let [position (vector-2! (body! part2 :get-position) :lerp (body! part1 :get-position) 0.5) ]
-        (body-position! part2 (x position) (y position) 0))
+  (let [position (vector-2! (body! part2 :get-position) :lerp (body! part1 :get-position) 0.5)]
+       (body-position! part2 (x position) (y position) 0))
   part2)
 
 
@@ -140,14 +140,14 @@
     (->> entities
          (step! screen)
          (render! screen)
-         (update-screen! screen)
-         ))
+         (update-screen! screen)))
+
 
   :on-key-down
   (fn [screen entities]
     (let [x (cond (key-pressed? :a) -20 (key-pressed? :d) 20 :else 0)
           y (cond (key-pressed? :s) -20 (key-pressed? :w) 20 :else 0)]
-    (move entities x y)))
+     (move entities x y)))
 
   :on-begin-contact
   (fn [screen entities]
@@ -183,4 +183,3 @@
 
 ;; (-> main-screen :entities deref)
 ;; (.groupIndex (.getFilterData (first (.getFixtureList (:body (first (filter :ball? @(-> main-screen :entities))))))))
-
