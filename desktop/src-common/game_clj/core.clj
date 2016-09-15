@@ -48,13 +48,12 @@
 
 (defn create-part-entity!
   [screen]
-  (let [part (texture "head.png")
+  (let [part (texture "circle32.png")
         width (/ (texture! part :get-region-width) pixels-per-tile)
         height (/ (texture! part :get-region-height) pixels-per-tile)]
     (assoc part :body (create-part-body! screen (/ width 2))
                 :width width
                 :height height)))
-
 
 (defn create-ball-entity!
   [screen]
@@ -120,7 +119,7 @@
       ; set the screen width in tiles
       (width! screen game-w)
       ; return the entities
-      [(assoc ball :ball? true)
+      [
        (assoc wall :wall? true)
        (assoc floor :floor? true)
        (for [col (range block-cols)
@@ -137,7 +136,8 @@
                    y (+ (* row block-h) (- game-h (* block-h block-rows)))]]
          (assoc (doto (create-rect-entity! screen block block-w block-h)
                   (body-position! x y 0))
-                :block? true))]))
+                :block? true))
+       (assoc ball :ball? true)]))
 
   :on-render
   (fn [screen entities]
