@@ -7,6 +7,8 @@
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 (def ^:const pixels-per-tile 32)
+(def x0 (/ 100 pixels-per-tile))
+(def y0 x0)
 
 (defn create-part-body!
   [screen radius]
@@ -23,7 +25,8 @@
   [screen radius]
   (let [body (add-body! screen (body-def :dynamic))]
     (let [ball-fixture-def
-          (->> (circle-shape :set-radius radius)
+          (->> (circle-shape :set-radius radius
+                             :set-position (vector-2 radius radius))
                (fixture-def :density 1 :friction 0 :restitution 1 :shape))]
       (do (set! (.groupIndex (.filter ball-fixture-def)) (short -1))
           (body! body :create-fixture ball-fixture-def))
@@ -45,19 +48,22 @@
 
 (defn create-part-entity!
   [screen]
-  (let [radius (/ 32 pixels-per-tile 2)
-        part (shape :line
-                    :set-color (color :blue)
-                    :circle 0 0 radius 20)]
-    (assoc part :body (create-part-body! screen radius))))
+  (let [part (texture "head.png")
+        width (/ (texture! part :get-region-width) pixels-per-tile)
+        height (/ (texture! part :get-region-height) pixels-per-tile)]
+    (assoc part :body (create-part-body! screen (/ width 2))
+                :width width
+                :height height)))
+
 
 (defn create-ball-entity!
   [screen]
-  (let [radius (/ 32 pixels-per-tile 2)
-        ball (shape :filled
-                    :set-color (color :blue)
-                    :circle 0 0 radius 20)]
-    (assoc ball :body (create-ball-body! screen radius))))
+  (let [ball (texture "head.png")
+        width (/ (texture! ball :get-region-width) pixels-per-tile)
+        height (/ (texture! ball :get-region-height) pixels-per-tile)]
+    (assoc ball :body (create-ball-body! screen (/ width 2))
+                :width width
+                :height height)))
 
 (defn create-rect-entity!
   [screen block width height]
@@ -104,8 +110,7 @@
           block-cols (int (/ game-w block-w))
           block-rows (int (/ game-h 2 block-h))
           ball (doto (create-ball-entity! screen)
-                 (body-position! (/ 100 pixels-per-tile)
-                                 (/ 100 pixels-per-tile)
+                 (body-position! x0 y0
                                  0)
                  (body! :set-linear-velocity 0 0))
           wall (doto {:body (create-rect-body! screen game-w game-h)}
