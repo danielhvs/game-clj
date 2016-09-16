@@ -1,6 +1,6 @@
 ## Introduction
 
-A play-clj game in which ... well, that part is up to you.
+Learning clojure using play-clj framework as a sandbox.
 
 ## Contents
 
@@ -8,3 +8,8 @@ A play-clj game in which ... well, that part is up to you.
 * `desktop/resources` Images, audio, and other files
 * `desktop/src` Desktop-specific code
 * `desktop/src-common` Cross-platform game code
+
+## Try it!
+
+$ cd desktop
+$ lein run
