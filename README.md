@@ -11,5 +11,5 @@ Learning clojure using play-clj framework as a sandbox.
 
 ## Try it!
 
-$ cd desktop
-$ lein run
+ * $ cd desktop
+ * $ lein run
